@@ -1,0 +1,127 @@
+Comandos utilizados, práctica laboratorio 5.3: Alta Disponibilidad y Clustering.
+
+CLÚSTER DE ALTA DISPONBILIDAD HTTP
+
+============================================
+
+# Utilizaremos dos máquinas RHEL, la principal y un clon. Debemos descargar el servidor web en ambos servidores, en este caso, Apache:
+
+sudo dnf install httpd
+
+# Debemos descargar el servicio de keepalived en ambos servidores, en este caso:
+
+sudo dnf install keepalived
+
+# Debemos de habilitar y arrancar el servicio tanto de Apache como de keepalived:
+
+sudo systemctl enable httpd && sudo systemctl start httpd
+sudo systemctl enable keepalived && sudo systemctl start keepalived
+
+# Creamos una página index.html en cada servidor:
+sudo nano /var/www/html/index.html
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <h1>¡Este es el servidor 1!</h1>
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <h1>¡Este es el servidor 2!</h1>
+</body>
+</html>
+
+# Habilitamos el puerto 80/TCP, protocolo VRRP y zona pública en los firewalls de ambos servidores de RHEL:
+
+sudo firewall-cmd --permanent --add-port=80/tcp --zone=public && sudo firewall-cmd --permanent --add-protocol=vrrp --zone=public
+sudo firewall-cmd --reload
+
+# Luego, configuramos la escucha del puerto 80 en el archivo de configuración de Apache en ambos servidores:
+
+sudo nano /etc/httpd/conf/httpd.conf
+Listen *:80
+
+# Editamos el archivo de configuración de keepalived en ambos servidores donde el primario va a ser el MASTER y el clon el BACKUP:
+
+sudo nano /etc/keepalived/keepalived.conf
+
+global_defs {
+	router_id SERVER1
+}
+vrrp_script check_service {
+        script "/usr/bin/killall -0 httpd" # Cambia segun el servicio
+        interval 2
+        weight 2
+}
+
+
+vrrp_instance VI_1 {
+    state BACKUP
+    interface ens160
+    virtual_router_id 51
+    priority 150
+    advert_int 1
+
+    authentication {
+        auth_type PASS
+        auth_pass 1234
+    }
+    virtual_ipaddress {
+        192.168.0.200/24
+    }
+
+    track_script {
+        check_service
+    }
+}
+
+global_defs {
+	router_id SERVER2
+}
+vrrp_script check_service {
+        script "/usr/bin/killall -0 httpd" # Cambia segun el servicio
+        interval 2
+        weight 2
+}
+
+
+vrrp_instance VI_1 {
+    state BACKUP
+    interface ens160
+    virtual_router_id 51
+    priority 20
+    advert_int 1
+
+    authentication {
+        auth_type PASS
+        auth_pass 1234
+    }
+    virtual_ipaddress {
+        192.168.0.200/24
+    }
+
+    track_script {
+        check_service
+    }
+}
+
+
+# Luego, reiniciamos los servicios de Apache y keepalived en cada servidor:
+
+sudo systemctl restart httpd
+sudo systemctl restart keepalived.service
+
+
+
+# Finalmente, desde nuestro host, abrimos la IP flotante desde un navegador y verificamos el servidor activo. Luego, para comprobar la alta disponibilidad, iniciamos un ping permanente y reiniciamos el servidor master o apagamos la interfaz; si el ping continúa a pesar del reinicio, y el navegador cargar la información del backup, la configuración ha sido realizada exitosamente.
