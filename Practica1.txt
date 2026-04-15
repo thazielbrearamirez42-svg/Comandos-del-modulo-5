@@ -12,7 +12,7 @@ sudo dnf install rsync
 # Para asegurarnos de una conexión sin interrupciones, creamos llaves ssh para que el servidor principal pueda conectarse al clon sin credenciales:
 
 ssh-keygen
-ssh-copy-id tbrea@192.168.70.133
+ssh-copy-id tbrea@192.168.70.134
 
 
 # Luego de ello, en el servidor principal, crearemos la carpeta con los archivos sincronizar:
@@ -31,7 +31,7 @@ mkdir ~/forma2
 
 # Volvemos al servidor principal e iniciamos la sincronización utilizando el usuario e IP address del segundo servidor, parecido a la sincronización ssh:
 
-rsync -avz ~/archivo/ tbrea@192.168.70.132:~/sync/
+rsync -avz ~/archivo/ tbrea@192.168.1.134:~/sync/
 
 # Tendremos que colocar la contraseña del usuario perteneciente al servidor secundario una vez sea requerida. Luego, desde dicho servidor secundario, comprobamos que los archivos hayan sido transmitidos:
 
@@ -46,7 +46,7 @@ nano script.sh
 # Luego, crearemos un script para la sincronización de los documentos:
 
 #!/bin/bash
-rsync -avz ~/forma tbrea@192.168.0.132:~/copia2
+rsync -avz ~/forma tbrea@192.168.1.134:~/forma2
 
 # Al concluir, guardamos el archivo y agregamos permisos de ejecución:
 
