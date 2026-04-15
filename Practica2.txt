@@ -6,6 +6,8 @@ INSTALACIÓN Y CONFIGURACIÓN DEL CLÚSTER
 
 sudo subscription-manager repos --enable=rhel-8-for-x86_64-highavailability-rpms
 
+sudo subscription-manager repos --enable=rhel-9-for-x86_64-highavailability-rpms
+
 # Luego, en ambos servidores, instalamos Pacemaker y herramientas necesarias:
 
 sudo dnf install -y pacemaker pcs
@@ -26,12 +28,12 @@ sudo firewall-cmd --reload
 
 # Luego, para autenticar los nodos y hosts entre sí, desde el servidor principal ejecutamos el siguiente comando utilizando las IP addresses de los servidores utilizados (ejecutar solo en uno de los servidores):
 
-sudo pcs cluster auth 192.168.70.132 192.168.70.133 -u hacluster
-sudo pcs host auth 192.168.70.132 192.168.70.133 -u hacluster
+sudo pcs cluster auth 192.168.1.132 192.168.1.133 -u hacluster
+sudo pcs host auth 192.168.1.132 192.168.1.133 -u hacluster
 
 # Tendremos que insertar la contraseña del usuario hacluster. Luego, creamos el clúster y asignamos un nombre (ejecutamos solo en un servidor):
 
-sudo pcs cluster setup cluster-tbrea 192.168.70.132 192.168.70.133
+sudo pcs cluster setup cluster-tbrea 192.168.1.132 192.168.1.133
 
 
 # Luego, en solo uno de los servidores, habilitamos e iniciamos el clúster:
@@ -49,10 +51,14 @@ sudo pcs property set stonith-enabled=false
 
 # Luego, en uno de los servidores, configuramos la IP address virtual (flotante) que se moverá entre nodos si uno falla:
 
-sudo pcs resource create IP_Flotante ocf:heartbeat:IPaddr2 ip=192.168.70.150 cidr_netmask=24 op monitor interval=30s
+sudo pcs resource create IP_Flotante ocf:heartbeat:IPaddr2 ip=192.168.1.150 cidr_netmask=24 op monitor interval=30s
 
 # Luego de ello, desde nuestra máquina host probamos la disponibilidad de los nodos: hacemos un ping permanente a la IP address virtual:
 
-ping -t 192.168.70.150
+ping -t 192.168.1.150
 
 # Mientras hacemos ping, reiniciamos los servidores de forma intercalada para comprobar que Pacemaker transfiere la IP flotante al nodo restante. Si el ping no se pierde, la configuración ha sido exitosa.
+
+sudo pcs cluster destroy=elimi cluster
+
+sudo pcs resource delete IP_Flotante =eli.ip flotante
