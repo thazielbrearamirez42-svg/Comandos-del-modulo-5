@@ -125,3 +125,6 @@ sudo systemctl restart keepalived.service
 
 
 # Finalmente, desde nuestro host, abrimos la IP flotante desde un navegador y verificamos el servidor activo. Luego, para comprobar la alta disponibilidad, iniciamos un ping permanente y reiniciamos el servidor master o apagamos la interfaz; si el ping continúa a pesar del reinicio, y el navegador cargar la información del backup, la configuración ha sido realizada exitosamente.
+
+sudo nmcli con down ens160   or up 
+hacer ping desde host con Ip Flotante 
