@@ -28,12 +28,16 @@ sudo firewall-cmd --reload
 
 # Luego, para autenticar los nodos y hosts entre sí, desde el servidor principal ejecutamos el siguiente comando utilizando las IP addresses de los servidores utilizados (ejecutar solo en uno de los servidores):
 
-sudo pcs cluster auth 192.168.1.132 192.168.1.133 -u hacluster
-sudo pcs host auth 192.168.1.132 192.168.1.133 -u hacluster
+sudo pcs cluster auth 192.168.1.62 192.168.1.85 -u hacluster
+sudo pcs host auth 192.168.1.62 192.168.1.85 -u hacluster
+
+
+#Para que las maquinas confien entre si:
+sudo pcs host auth 192.168.1.85 192.168.1.62 -u hacluster -p tu_contraseña
 
 # Tendremos que insertar la contraseña del usuario hacluster. Luego, creamos el clúster y asignamos un nombre (ejecutamos solo en un servidor):
 
-sudo pcs cluster setup cluster-tbrea 192.168.1.132 192.168.1.133
+sudo pcs cluster setup cluster-tbrea 192.168.1.62 192.168.1.85
 
 
 # Luego, en solo uno de los servidores, habilitamos e iniciamos el clúster:
