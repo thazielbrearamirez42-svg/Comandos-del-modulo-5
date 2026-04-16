@@ -57,63 +57,67 @@ Listen *:80
 sudo nano /etc/keepalived/keepalived.conf
 
 global_defs {
-	router_id SERVER1
-}
-vrrp_script check_service {
-        script "/usr/bin/killall -0 httpd" # Cambia segun el servicio
-        interval 2
-        weight 2
+    router_id SERVER1
+    script_security on
 }
 
+vrrp_script check_service {
+    script ""/usr/sbin/pidof httpd"
+    interval 2
+    weight 2
+}
 
 vrrp_instance VI_1 {
-    state BACKUP
+    state MASTER
     interface ens160
     virtual_router_id 51
     priority 150
     advert_int 1
-
     authentication {
         auth_type PASS
         auth_pass 1234
     }
     virtual_ipaddress {
-        192.168.0.200/24
+192.168.1.150/24
     }
-
     track_script {
         check_service
     }
 }
 
-global_defs {
-	router_id SERVER2
-}
+
+============================================
+
+    global_defs {
+           router_id SERVER2
+            script_security 1
+}                                                                              >
 vrrp_script check_service {
-        script "/usr/bin/killall -0 httpd" # Cambia segun el servicio
-        interval 2
-        weight 2
-}
+                     script "/usr/sbin/pidof httpd"
+ # Cambia segun el servicio
+              interval 2
+              weight 2
+ }
 
 
 vrrp_instance VI_1 {
-    state BACKUP
-    interface ens160
-    virtual_router_id 51
-    priority 20
-    advert_int 1
+      state BACKUP
+      interface ens160
+      virtual_router_id 51
+      priority 20
+      advert_int 1
 
-    authentication {
-        auth_type PASS
-        auth_pass 1234
-    }
-    virtual_ipaddress {
-        192.168.0.200/24
-    }
-
-    track_script {
-        check_service
-    }
+   authentication {
+         auth_type PASS
+         auth_pass 1234
+                       
+}
+ virtual_ipaddress {
+     192.168.1.150/24
+}
+      track_script {
+          check_service
+   }
 }
 
 
@@ -128,3 +132,28 @@ sudo systemctl restart keepalived.service
 
 sudo nmcli con down ens160   or up 
 hacer ping desde host con Ip Flotante 
+
+
+Estado del servicio:
+bashsudo systemctl status keepalived
+sudo journalctl -u keepalived -n 20
+
+Verificar IP flotante:
+baship addr show ens160
+
+Ver logs en tiempo real:
+bashsudo tail -f /var/log/messages | grep keepalived
+
+Verificar configuración sin errores:
+bashsudo keepalived --config-test
+
+Ver si VRRP está funcionando:
+bashsudo tcpdump -i ens160 vrrp
+
+Verificar conectividad con el clon:
+bashping 192.168.1.134
+
+Ver qué nodo tiene la IP flotante:
+baship addr show | grep 192.168.1.200
+
+ip addr show ens160 | grep 192.168.1.150
